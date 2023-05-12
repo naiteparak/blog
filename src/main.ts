@@ -16,7 +16,7 @@ async function bootstrap() {
   const port = configService.get('PORT');
 
   const config = new DocumentBuilder()
-    .setTitle('The Blog')
+    .setTitle('Blog')
     .setDescription('The Blog API description')
     .setVersion('1.0')
     .addBearerAuth()
