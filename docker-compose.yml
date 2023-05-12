@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    networks:
+      - custom_bridge
+    ports:
+      - ${PORT}:${PORT}
+    restart: always
+  postgres:
+    build:
+      dockerfile: Dockerfile-db
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
+    networks:
+      - custom_bridge
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+networks:
+  custom_bridge:
+volumes:
+  pgdata:
+  node_modules:
