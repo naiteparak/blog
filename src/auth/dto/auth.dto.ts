@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { faker } from '@faker-js/faker';
 import { IsString } from 'class-validator';
 
-export class CreateUserDto {
+export class SignUpDto {
   @ApiProperty({
     example: faker.internet.userName(),
   })
@@ -20,4 +20,24 @@ export class CreateUserDto {
   })
   @IsString()
   username: string;
+}
+
+export class LoginDto {
+  @ApiProperty({
+    example: faker.internet.userName(),
+  })
+  @IsString()
+  login: string;
+
+  @ApiProperty({
+    example: 'password',
+  })
+  @IsString()
+  password: string;
+}
+
+export class RefreshTokenDto {
+  @ApiProperty()
+  @IsString()
+  refreshToken: string;
 }
