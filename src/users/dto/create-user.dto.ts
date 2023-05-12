@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { fa, faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { IsString } from 'class-validator';
 
 export class CreateUserDto {
