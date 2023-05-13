@@ -1,8 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, AfterLoad } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
-@Entity('users')
-export class UserEntity {
+@Entity('authors')
+export class AuthorsEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

@@ -1,72 +1,98 @@
-import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import {
-  CRYPT_SALT,
-  JWT_SECRET_KEY,
-  JWT_SECRET_REFRESH_KEY,
-  TOKEN_EXPIRE_TIME,
-  TOKEN_REFRESH_EXPIRE_TIME,
-} from '../../common/configs/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthorsService } from '../authors/authors.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from '../users/entities/user.entity';
+import {
+  LoginDto,
+  RefreshTokenDto,
+  SignUpDto,
+  TokensDTO,
+} from './dto/auth.dto';
+import { ConfigService } from '@nestjs/config';
+import { compare } from 'bcrypt';
+import { AuthMessages } from './messages/auth.messages';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
+    private authorsService: AuthorsService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
-  async signup(body: CreateUserDto): Promise<any> {
-    try {
-      const hashedPassword = await bcrypt.hash(body.password, CRYPT_SALT);
-      const newUser = await this.usersService.createUser({
-        ...body,
-        password: hashedPassword,
-      });
-      const tokens = await this.getTokens(newUser);
-      return { ...tokens, id: newUser.id };
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new ConflictException('Username already exists');
-      } else {
-        throw new InternalServerErrorException();
-      }
+  async signUp(body: SignUpDto): Promise<TokensDTO> {
+    const author = await this.authorsService.createAuthor(body);
+    const payload = {
+      username: body.username,
+      login: body.login,
+      sub: author.id,
+    };
+
+    const { accessToken, refreshToken } = await this.generateTokens(payload);
+    await this.authorsService.updateToken(author.id, refreshToken);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async login(body: LoginDto): Promise<TokensDTO> {
+    const author = await this.authorsService.findAuthorByLogin(body.login);
+    const isPassValid = compare(body.password, author.password);
+
+    if (isPassValid) {
+      const payload = {
+        username: author.username,
+        login: body.login,
+        sub: author.id,
+      };
+
+      const { accessToken, refreshToken } = await this.generateTokens(payload);
+      await this.authorsService.updateToken(author.id, refreshToken);
+
+      return {
+        accessToken,
+        refreshToken,
+      };
+    } else {
+      throw new UnauthorizedException(AuthMessages.UNAUTHORIZED);
     }
   }
 
-  async getTokens(user: UserEntity): Promise<any> {
-    const payload = {
-      accessToken: this.jwtService.sign(
-        { id: user.id, login: user.login },
-        {
-          secret: JWT_SECRET_KEY,
-          expiresIn: TOKEN_EXPIRE_TIME,
-        },
-      ),
-      refreshToken: this.jwtService.sign(
-        {},
-        {
-          secret: JWT_SECRET_REFRESH_KEY,
-          expiresIn: TOKEN_REFRESH_EXPIRE_TIME,
-        },
-      ),
-    };
-    await this.refreshToken(user.login, payload.refreshToken);
-    return payload;
+  async refreshTokens(login: string, body: RefreshTokenDto) {
+    const author = await this.authorsService.findAuthorByLogin(login);
+
+    if (body.refreshToken === author.refreshToken) {
+      const payload = {
+        username: author.username,
+        login: author.login,
+        sub: author.id,
+      };
+      const { accessToken, refreshToken } = await this.generateTokens(payload);
+      await this.authorsService.updateToken(author.id, refreshToken);
+
+      return {
+        accessToken,
+        refreshToken,
+      };
+    } else {
+      throw new UnauthorizedException(AuthMessages.UNAUTHORIZED);
+    }
   }
 
-  async refreshToken(login: string, token: string): Promise<any> {
-    const user = await this.usersService.findUserByLogin(login);
-    await this.usersService.updateToken(
-      { id: user.id },
-      { ...user, refreshToken: token },
+  private async generateTokens(payload): Promise<TokensDTO> {
+    const accessToken = await this.jwtService.signAsync(payload);
+    const refreshToken = await this.jwtService.signAsync(
+      {},
+      {
+        secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
+        expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
+      },
     );
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 }
