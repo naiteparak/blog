@@ -41,3 +41,11 @@ export class RefreshTokenDto {
   @IsString()
   refreshToken: string;
 }
+
+export class TokensDTO {
+  @ApiProperty()
+  accessToken: string;
+
+  @ApiProperty()
+  refreshToken: string;
+}
