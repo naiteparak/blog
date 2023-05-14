@@ -25,8 +25,6 @@ export class RecordsService {
 
     const record = this.recordRepository.create({
       id: randomUUID(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
       fileName: fileName,
       message: body.message || null,
       authorId: req.author.sub,
@@ -76,10 +74,7 @@ export class RecordsService {
       message = body.message;
     }
 
-    await this.recordRepository.update(
-      { id: recordId },
-      { fileName, message, updatedAt: Date.now() },
-    );
+    await this.recordRepository.update({ id: recordId }, { fileName, message });
 
     return await this.getRecordById(recordId);
   }
