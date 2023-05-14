@@ -1,7 +1,6 @@
 import { DiskStorageOptions } from 'multer';
 import { Request } from 'express';
 import { randomUUID } from 'crypto';
-import * as process from 'process';
 
 export const FileInterceptorOptions: DiskStorageOptions = {
   destination: `${process.cwd()}/src/uploads`,
