@@ -1,5 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, AfterLoad } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BeforeInsert,
+  CreateDateColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { hash } from 'bcrypt';
 
 @Entity('authors')
 export class AuthorsEntity {
@@ -16,15 +23,15 @@ export class AuthorsEntity {
   @Column('varchar', { unique: true })
   username: string;
 
-  @Column('int8')
-  createdAt: number;
+  @CreateDateColumn()
+  createdAt: string;
 
   @Exclude()
   @Column({ nullable: true })
   refreshToken: string | null;
 
-  @AfterLoad()
-  _convertNumerics() {
-    this.createdAt = +this.createdAt;
+  @BeforeInsert()
+  async hashPassword() {
+    this.password = await hash(this.password, +process.env.CRYPT_SALT);
   }
 }

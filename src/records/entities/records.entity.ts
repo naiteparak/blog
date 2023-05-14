@@ -2,8 +2,9 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  AfterLoad,
   ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { AuthorsEntity } from '../../authors/entities/authors.entity';
 
@@ -18,10 +19,10 @@ export class RecordsEntity {
   @Column('varchar', { nullable: true })
   fileName: string | null;
 
-  @Column('int8')
+  @CreateDateColumn()
   createdAt: number;
 
-  @Column('int8')
+  @UpdateDateColumn()
   updatedAt: number;
 
   @Column('boolean', { default: false })
@@ -32,10 +33,4 @@ export class RecordsEntity {
 
   @ManyToOne(() => AuthorsEntity)
   author: AuthorsEntity;
-
-  @AfterLoad()
-  _convertNumerics() {
-    this.createdAt = +this.createdAt;
-    this.updatedAt = +this.updatedAt;
-  }
 }

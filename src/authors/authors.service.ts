@@ -8,29 +8,20 @@ import { AuthorsEntity } from './entities/authors.entity';
 import { Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { SignUpDto } from '../auth/dto/auth.dto';
-import { hash } from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
 import { AuthorsMessages } from './messages/authors.messages';
 
 @Injectable()
 export class AuthorsService {
-  private readonly CRYPT_SALT;
-
   constructor(
     @InjectRepository(AuthorsEntity)
     private authorsRepository: Repository<AuthorsEntity>,
-    private configService: ConfigService,
-  ) {
-    this.CRYPT_SALT = +this.configService.get('CRYPT_SALT');
-  }
+  ) {}
 
   async createAuthor(body: SignUpDto): Promise<AuthorsEntity> {
     try {
       const author: AuthorsEntity = await this.authorsRepository.create({
         ...body,
         id: randomUUID(),
-        createdAt: Date.now(),
-        password: await hash(body.password, this.CRYPT_SALT),
       });
       return await this.authorsRepository.save(author);
     } catch (error) {
