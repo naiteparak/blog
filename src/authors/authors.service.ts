@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthorsEntity } from './entities/authors.entity';
 import { Repository } from 'typeorm';
@@ -6,6 +10,7 @@ import { randomUUID } from 'crypto';
 import { SignUpDto } from '../auth/dto/auth.dto';
 import { hash } from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import { AuthorsMessages } from './messages/authors.messages';
 
 @Injectable()
 export class AuthorsService {
@@ -38,11 +43,13 @@ export class AuthorsService {
   }
 
   async findAuthorByLogin(login: string): Promise<AuthorsEntity> {
-    return await this.authorsRepository.findOneByOrFail({ login });
-  }
-
-  async findAuthorById(id: string): Promise<AuthorsEntity> {
-    return await this.authorsRepository.findOneBy({ id });
+    try {
+      return await this.authorsRepository.findOneOrFail({
+        where: { login },
+      });
+    } catch (error) {
+      throw new NotFoundException(AuthorsMessages.AUTHOR_NOT_FOUND);
+    }
   }
 
   async updateToken(id: string, token: string): Promise<void> {
